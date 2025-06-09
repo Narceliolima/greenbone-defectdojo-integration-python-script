@@ -11,11 +11,6 @@ def main():
     # API_URL = "http://127.0.0.1:8080/api/v2/import-scan/"
     connection = Connection("0.0.0.0", 5000)
 
-    #xml_sender = sxd("winser2022report.xml")
-    # xml_sender.get_xml_name()
-    # with open("winser2022report.xml", "rb") as file:
-    #     xml_sender.post_engagement_data(file)
-
     file1, file_type1 = connection.receive_file_data()
     file2, file_type2 = connection.receive_file_data()
 
