@@ -1,14 +1,15 @@
 import os
 import traceback
-from csv_file import CsvFile
-from csv_process import CsvProcess
 from connection import Connection
-from xml_file import XmlFile
+from report_file import ReportFile
+from data_process import DataProcess
 from dotenv import load_dotenv
 
 def main():
 
-    load_dotenv("dojointegrationconfig.env")
+    if not load_dotenv("dojointegrationconfigtest.env"):
+        load_dotenv("dojointegrationconfig.env")
+
 
     server_ip = os.getenv("SERVER_IP")
     green_port = int(os.getenv("GREENBONE_REPORT_SEND_PORT"))
@@ -26,39 +27,23 @@ def main():
         file2, file_type2 = connection.receive_file_data()
 
         if file_type1 == 2 and file_type2 == 3:
-            xml_file = XmlFile(file1)
-            csv_file = CsvFile(file2, xml_file._xml_file_path)
-            csv_file.set_csv_data(CsvProcess.csv_convert_high_to_critical(csv_file.get_csv_string_array()))
-            csv_file.save_csv_file()
-            connection.post_engagement_data(csv_file.get_csv_buffered_reader())
+            report_file = ReportFile(file2, file1)
+            report_file.set_report_data(DataProcess.csv_convert_high_to_critical(report_file.get_report_string_array()))
+            report_file.save_report_file()
+            connection.post_engagement_data(report_file.get_report_buffered_reader())
         elif file_type2 == 2 and file_type1 == 3:
-            xml_file = XmlFile(file2)
-            csv_file = CsvFile(file1, xml_file._xml_file_path)
-            csv_file.set_csv_data(CsvProcess.csv_convert_high_to_critical(csv_file.get_csv_string_array()))
-            csv_file.save_csv_file()
-            connection.post_engagement_data(csv_file.get_csv_buffered_reader())
-    except Exception as e:
+            report_file = ReportFile(file1, file2)
+            report_file.set_report_data(DataProcess.csv_convert_high_to_critical(report_file.get_report_string_array()))
+            report_file.save_report_file()
+            connection.post_engagement_data(report_file.get_report_buffered_reader())
+    except:
         traceback.print_exc()
     finally:
         try:
             connection.close_connection()
-        except Exception as e:
+        except:
             traceback.print_exc()
-    
 
-    # xml_file = XmlFile(connection.receive_file_data()[0])
-    # xml_file.set_xml_data(CsvProcess.xml_convert_high_to_critical(xml_file.get_xml_root()))
-    # xml_file.save_xml_file()
-    # connection.post_engagement_data(xml_file.get_xml_buffered_reader())
-
-
-    
-    # csv_file = CsvFile(connection.receive_file_data()[0], "LastReport")
-    # csv_file.set_csv_data(CsvProcess.csv_convert_high_to_critical(csv_file.get_csv_string_array()))
-    # csv_file.save_csv_file()
-    # connection.post_engagement_data(csv_file.get_csv_buffered_reader())
-    # connection.close_connection()
-    
     
 if __name__ == "__main__":
     main()

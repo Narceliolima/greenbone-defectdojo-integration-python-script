@@ -70,12 +70,12 @@ class Connection:
             "close_old_findings_product_scope": True,
             "product_name": product_name,
             "auto_create_context": True,
-            #"deduplication_on_engagement": True
+            "deduplication_on_engagement": False
         }
 
 
     def _add_engagement_name(self, name: str):
-        self._data["engagement_name"] = name.removesuffix(".xml").removesuffix(".csv")
+        self._data["engagement_name"] = name.removesuffix(".csv")
 
 
     def _open_connection(self, host: str, port: int):

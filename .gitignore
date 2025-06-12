@@ -193,4 +193,7 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 *.csv
-
+*.xml
+*.env
+!base.xml
+!dojointegrationconfig.env
