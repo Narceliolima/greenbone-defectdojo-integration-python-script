@@ -1,4 +1,5 @@
 import os
+import traceback
 from csv_file import CsvFile
 from csv_process import CsvProcess
 from connection import Connection
@@ -37,12 +38,12 @@ def main():
             csv_file.save_csv_file()
             connection.post_engagement_data(csv_file.get_csv_buffered_reader())
     except Exception as e:
-        print(e)
+        traceback.print_exc()
     finally:
         try:
             connection.close_connection()
         except Exception as e:
-            print(e)
+            traceback.print_exc()
     
 
     # xml_file = XmlFile(connection.receive_file_data()[0])

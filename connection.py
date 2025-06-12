@@ -4,10 +4,8 @@ import requests
 class Connection:
 
     def __init__(self, host: str, green_port: int, dojo_port: int,  api_import_path: str, api_token: str, product_name: str, enviroment: str, service_tag: str):
-        self.xml_file = None
-        self.xml_path = None
-        self.__init_variables(host, dojo_port, api_import_path, api_token, product_name, enviroment, service_tag)
-        self.__open_connection(host, green_port)
+        self._init_variables(host, dojo_port, api_import_path, api_token, product_name, enviroment, service_tag)
+        self._open_connection(host, green_port)
 
 
     def close_connection(self):
@@ -43,23 +41,11 @@ class Connection:
         return file_data_string, file_type
 
 
-    # def send_file_data(self, file_buffered_reader):
-    #     print(file_buffered_reader)
-    #     files = {"file": file_buffered_reader}
-    #     response = requests.post(self._api_url, headers=self._headers, data=self._data, files=files)
-
-    #     # Imprime resposta da API.
-    #     if response.status_code == 201:
-    #         print("Arquivo enviado com sucesso!")
-    #     else:
-    #         print(f"Erro ao enviar o arquivo: {response.status_code} - {response.text}")
-
-
     def post_engagement_data(self, file_buffered_reader):
-        self.xml_path = file_buffered_reader.name
-        self.__init_variables()
+        self._add_engagement_name(file_buffered_reader.name)
         files = {"file": file_buffered_reader}
-        response = requests.post(self._api_url+import_scan_path, headers=self._headers, data=self._data, files=files)
+
+        response = requests.post(self._api_url, headers=self._headers, data=self._data, files=files)
 
         # Imprime resposta da API.
         if response.status_code == 201:
@@ -83,14 +69,13 @@ class Connection:
             "close_old_findings": True,
             "close_old_findings_product_scope": True,
             "product_name": product_name,
-            #"engagement_name": self.xml_path.replace(".xml", "").replace(".csv", ""),
             "auto_create_context": True,
             #"deduplication_on_engagement": True
         }
 
 
-    def _add_data_parameter(self, key:str, value: str):
-        self._data[key] = value
+    def _add_engagement_name(self, name: str):
+        self._data["engagement_name"] = name.removesuffix(".xml").removesuffix(".csv")
 
 
     def _open_connection(self, host: str, port: int):
