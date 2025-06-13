@@ -16,6 +16,9 @@ class Connection:
 
     def receive_file_data(self):
 
+        if not self.is_open:
+            return
+        
         file_data_string = b""
         connection, address = self._serversocket.accept()
         print(f"IP {address} conectado.")
@@ -52,6 +55,16 @@ class Connection:
             print("Arquivo enviado com sucesso!")
         else:
             print(f"Erro ao enviar o arquivo: {response.status_code} - {response.text}")
+
+
+    @staticmethod
+    def send_file_data(host_ip: str, host_port: int, file_data: bytes):
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.connect((host_ip, host_port))
+                s.sendall(file_data)
+        except Exception as e:
+            print(f"Erro ao enviar arquivo: {e}")
 
 
     def _init_variables(self, host: str, port: int, api_import_path: str, api_token: str, product_name: str, enviroment: str, service_tag: str):
