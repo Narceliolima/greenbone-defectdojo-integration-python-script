@@ -1,59 +1,76 @@
+import os
 import sys
-from csv_file import CsvFile
-from csv_process import CsvProcess
+import signal
+import traceback
 from connection import Connection
-from xml_file import XmlFile
-from send_xml_dojo import SendXmlDojo as sxd
+from report_file import ReportFile
+from data_process import DataProcess
+from dotenv import load_dotenv
+
+running = True
+sys.stdout.reconfigure(line_buffering=True)
+
+def handle_sigterm(signum, frame):
+    global running
+    running = False
+
+    if not load_dotenv("dojointegrationconfigtest.env"):
+        load_dotenv("dojointegrationconfig.env")
+
+    server_ip = os.getenv("SERVER_IP")
+    green_port = int(os.getenv("GREENBONE_REPORT_SEND_PORT"))
+    Connection.send_file_data(server_ip, green_port, b"kill")
+    print("Sinal de parada gerado pelo usuário...")
+
+signal.signal(signal.SIGTERM, handle_sigterm)
 
 def main():
 
-    # API_KEY = "a30c6d080fa0a93d2527e285c250723f8a813da4"
-    # API_URL = "http://127.0.0.1:8080/api/v2/import-scan/"
-    connection = Connection("0.0.0.0", 5000)
-
-    #xml_sender = sxd("winser2022report.xml")
-    # xml_sender.get_xml_name()
-    # with open("winser2022report.xml", "rb") as file:
-    #     xml_sender.post_engagement_data(file)
-
-    file1, file_type1 = connection.receive_file_data()
-    file2, file_type2 = connection.receive_file_data()
-
-    if file_type1 == 2 and file_type2 == 3:
-        xml_file = XmlFile(file1)
-        csv_file = CsvFile(file2, xml_file._xml_file_path)
-        csv_file.set_csv_data(CsvProcess.csv_convert_high_to_critical(csv_file.get_csv_string_array()))
-        csv_file.save_csv_file()
-        connection.post_engagement_data(csv_file.get_csv_buffered_reader())
-    elif file_type2 == 2 and file_type1 == 3:
-        xml_file = XmlFile(file2)
-        csv_file = CsvFile(file1, xml_file._xml_file_path)
-        csv_file.set_csv_data(CsvProcess.csv_convert_high_to_critical(csv_file.get_csv_string_array()))
-        csv_file.save_csv_file()
-        connection.post_engagement_data(csv_file.get_csv_buffered_reader())
+    if not load_dotenv("dojointegrationconfigtest.env"):
+        load_dotenv("dojointegrationconfig.env")
 
 
-    # xml_file = XmlFile(connection.receive_file_data()[0])
-    # xml_file.set_xml_data(CsvProcess.xml_convert_high_to_critical(xml_file.get_xml_root()))
-    # xml_file.save_xml_file()
-    # connection.post_engagement_data(xml_file.get_xml_buffered_reader())
+    server_ip = os.getenv("SERVER_IP")
+    green_port = int(os.getenv("GREENBONE_REPORT_SEND_PORT"))
+    dojo_port = int(os.getenv("DEFECTDOJO_PORT"))
+    api_import_path = os.getenv("DEFECTDOJO_API_IMPORT_PATH")
+    api_token = os.getenv("DEFECTDOJO_API_TOKEN")
+    product_name = os.getenv("DEFECTDOJO_PRODUCT_NAME")
+    enviroment = os.getenv("DEFECTDOJO_ENVIROMENT")
+    service_tag = os.getenv("DEFECTDOJO_SERVICE_TAG")
+
+    connection = Connection(server_ip, green_port, dojo_port, api_import_path, api_token, product_name, enviroment, service_tag)
+
+    while running:
+        try:
+            file1, file_type1 = connection.receive_file_data()
+            file2, file_type2 = connection.receive_file_data()
+
+            if not connection.is_open:
+                break
+
+            if file_type1 == 2 and file_type2 == 3:
+                report_file = ReportFile(file2, file1)
+                report_file.set_report_data(DataProcess.csv_convert_high_to_critical(report_file.get_report_string_array()))
+                report_file.save_report_file()
+                connection.post_engagement_data(report_file.get_report_buffered_reader())
+            elif file_type2 == 2 and file_type1 == 3:
+                report_file = ReportFile(file1, file2)
+                report_file.set_report_data(DataProcess.csv_convert_high_to_critical(report_file.get_report_string_array()))
+                report_file.save_report_file()
+                connection.post_engagement_data(report_file.get_report_buffered_reader())
+            else: 
+                print("Formato inválido")
+        except:
+            traceback.print_exc()
 
 
-    
-    # csv_file = CsvFile(connection.receive_file_data()[0], "LastReport")
-    # csv_file.set_csv_data(CsvProcess.csv_convert_high_to_critical(csv_file.get_csv_string_array()))
-    # csv_file.save_csv_file()
-    # connection.post_engagement_data(csv_file.get_csv_buffered_reader())
-    # connection.close_connection()
+    try:
+        if(connection.is_open):
+            connection.close_connection()
+    except:
+        traceback.print_exc()
 
 
-    # try:
-    #     file_path = sys.argv[1]
-    #     print(f"Nome do path:{file_path}")
-    # except (FileNotFoundError, IndexError) as e:
-    #     print(f"Nenhum arquivo foi passado por parametro.")
-    
-    
-    
 if __name__ == "__main__":
     main()
