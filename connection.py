@@ -13,7 +13,7 @@ class Connection:
     def __init_variables(self):
         self._api_url = "http://127.0.0.1:8080/api/v2/"#import-scan/"
         self._headers = {
-            "Authorization": f"Token a30c6d080fa0a93d2527e285c250723f8a813da4"
+            "Authorization": f"Token 0d81ac178a3c768ae72ae69978fadc41b694c966"
         }
         self._data = {
             "minimum_severity": "Info",
